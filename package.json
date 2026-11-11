@@ -1,0 +1,16 @@
+{
+  "name": "xbill-web",
+  "version": "1.0.0",
+  "description": "A browser port of XBill 2.1, verified tick-for-tick against the original C sources",
+  "license": "GPL-2.0-or-later",
+  "private": true,
+  "scripts": {
+    "build": "node build.js",
+    "test": "node test/unit.js && node test/unusual.js && node test/simulate.js 60",
+    "test:unit": "node test/unit.js",
+    "test:unusual": "node test/unusual.js",
+    "test:sim": "node test/simulate.js 60",
+    "test:diff": "node test/difftest.js",
+    "serve": "python3 -m http.server 8777"
+  }
+}

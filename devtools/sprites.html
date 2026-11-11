@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>XBill sprite sheet</title>
+<style>
+html,body { background:#14141a; margin:0; padding:8px; overflow:hidden; }
+canvas { display:block; }
+</style>
+</head>
+<body>
+<canvas id="sheet"></canvas>
+
+<script src="../src/engine.js"></script>
+<script src="../src/sprites.js"></script>
+<script>
+/* Everything on ONE canvas, laid out compactly — many separate canvases, or
+ * a very tall page, make screen capture time out. */
+const E = XBillEngine, S = XBillSprites;
+/* ?z=<zoom>&g=<group index> — inspect one group close up */
+const Q = new URLSearchParams(location.search);
+const Z = parseFloat(Q.get('z')) || 2.0;
+const ONLY = Q.has('g') ? parseInt(Q.get('g'), 10) : -1;
+const GAP = 5, LABEL = 11, TITLE = 15, MAXW = 940;
+
+const groups = [
+	{ t: 'Computers 55x45  (OS logo is painted on the screen at 4,4)',
+	  w: 55, h: 45,
+	  items: E.CPU_NAMES.map((n, i) =>
+		({ l: i + ' ' + n, d: x => S.drawComputer(x, i, 0, 0) })) },
+	{ t: 'Operating systems 28x24', w: 28, h: 24,
+	  items: E.OS_NAMES.map((n, i) =>
+		({ l: i + ' ' + n, d: x => S.drawOS(x, i, 0, 0) })) },
+	{ t: 'Machine + OS, as composited in play', w: 55, h: 45,
+	  items: E.CPU_NAMES.map((n, i) => {
+		const os = i < E.CPU_MIN_PC ? i : 8;
+		return { l: n, d: x => {
+			S.drawComputer(x, i, 0, 0);
+			S.drawOS(x, os, E.OS_OFFSET, E.OS_OFFSET);
+		} };
+	  }) },
+	{ t: 'Bill walking 24x38 (L0-3, R0-3)', w: 24, h: 38,
+	  items: ['L','R'].flatMap(st => [0,1,2,3].map(i =>
+		({ l: st + i, d: x => S.drawBill(x, st, i, 0, 0) }))) },
+	{ t: 'Bill dying 24x38', w: 24, h: 38,
+	  items: [0,1,2,3,4].map(i =>
+		({ l: 'D' + i, d: x => S.drawBill(x, 'D', i, 0, 0) })) },
+	{ t: 'Bill at computer 58x41 (steals OS at frame 6, installs by 11)',
+	  w: 58, h: 41,
+	  items: Array.from({ length: 13 }, (_, i) =>
+		({ l: 'A' + i, d: x => S.drawBill(x, 'A', i, 0, 0) })) },
+	{ t: 'Spark / bucket', w: 24, h: 24,
+	  items: [
+		{ l: 'spark0', d: x => S.drawSpark(x, 0, 2, 2) },
+		{ l: 'spark1', d: x => S.drawSpark(x, 1, 2, 2) },
+		{ l: 'bucket', d: x => S.drawBucket(x, 0, 0) },
+	  ] },
+];
+
+/* lay out, wrapping each group into rows that fit MAXW */
+const shown = ONLY >= 0 ? [groups[ONLY]].filter(Boolean) : groups;
+let y = GAP, maxX = 0;
+for (const g of shown) {
+	g.cw = g.w * Z + GAP;
+	g.ch = g.h * Z;
+	g.perRow = Math.max(1, Math.floor((MAXW - GAP) / g.cw));
+	g.rows = Math.ceil(g.items.length / g.perRow);
+	g.y = y + TITLE;
+	y += TITLE + g.rows * (g.ch + LABEL + GAP) + GAP;
+	maxX = Math.max(maxX, Math.min(g.items.length, g.perRow) * g.cw + GAP);
+}
+
+const c = document.getElementById('sheet');
+c.style.width = maxX + 'px'; c.style.height = y + 'px';
+c.width = maxX; c.height = y;        /* dpr 1 keeps capture cheap */
+const ctx = c.getContext('2d');
+ctx.fillStyle = '#14141a';
+ctx.fillRect(0, 0, maxX, y);
+
+for (const g of shown) {
+	ctx.fillStyle = '#e8a33d';
+	ctx.font = '600 11px system-ui, sans-serif';
+	ctx.fillText(g.t, GAP, g.y - 4);
+
+	g.items.forEach((it, i) => {
+		const col = i % g.perRow, row = (i / g.perRow) | 0;
+		const x = GAP + col * g.cw;
+		const yy = g.y + row * (g.ch + LABEL + GAP);
+
+		ctx.fillStyle = '#1f1f29';
+		ctx.fillRect(x, yy, g.w * Z, g.ch);
+		ctx.strokeStyle = '#35354a';
+		ctx.lineWidth = 1;
+		ctx.strokeRect(x + .5, yy + .5, g.w * Z - 1, g.ch - 1);
+
+		ctx.save();
+		ctx.translate(x, yy);
+		ctx.scale(Z, Z);
+		it.d(ctx);
+		ctx.restore();
+
+		ctx.fillStyle = '#9a9ab4';
+		ctx.font = '9px system-ui, sans-serif';
+		ctx.fillText(it.l, x, yy + g.ch + 9);
+	});
+}
+</script>
+</body>
+</html>

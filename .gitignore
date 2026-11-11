@@ -1,0 +1,9 @@
+node_modules/
+*.log
+.DS_Store
+
+# The original xbill tarball, its unpacked C sources and the compiled trace
+# binary are fetched and built into /tmp by test/harness/build.sh, so none of
+# them land here.  test/harness/ itself IS tracked — it holds the stub UI,
+# the harness source and the Horde.c patch.
+*.o

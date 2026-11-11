@@ -1,0 +1,41 @@
+76c76
+< 		free(bill);
+---
+> 		bill->state = 0;	/* harness: leak, see Horde_remove_bill */
+81c81
+< 		free(bill);
+---
+> 		bill->state = 0;
+93,95c93,101
+< 	for (bill = alive; bill != NULL; bill = next) {
+< 		next = bill->next;
+< 		Bill_update(bill);
+---
+> 	{	/* DIFFERENTIAL-HARNESS PATCH: snapshot, skip removed */
+> 		Bill *snap[8192];
+> 		int n = 0, i;
+> 		for (bill = alive; bill != NULL && n < 8192; bill = bill->next)
+> 			snap[n++] = bill;
+> 		for (i = 0; i < n; i++)
+> 			if (snap[i]->state != 0)
+> 				Bill_update(snap[i]);
+> 		(void)next;
+122c128,138
+< 	free(bill);
+---
+> 	/*
+> 	 * DIFFERENTIAL-HARNESS PATCH (not a gameplay change).
+> 	 *
+> 	 * Upstream frees here.  Horde_update caches bill->next before calling
+> 	 * Bill_update, and update_at() can remove the Bill that cache points
+> 	 * at (when it claims a computer's stray), so the loop then walks freed
+> 	 * memory.  That use-after-free makes the tail of the list behave
+> 	 * unpredictably, which cannot be meaningfully compared against a
+> 	 * memory-safe port.  Leak instead and flag it dead.
+> 	 */
+> 	bill->state = 0;
+175a192,195
+> 
+> /* ---- added for differential testing only: read-only list accessors ---- */
+> Bill *Horde_debug_alive(void)  { return alive; }
+> Bill *Horde_debug_strays(void) { return strays; }
