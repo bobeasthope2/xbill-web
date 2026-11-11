@@ -7,8 +7,10 @@ You are the sysadmin. Little men in suits are carrying **Wingdows** — a virus
 dressed up as an operating system — toward your computers. Click them before
 they arrive.
 
-Open **`dist/xbill.html`** in any browser. It is one self-contained file: no
-server, no build step, no network access.
+### ▶ [Play it](https://bobeasthope2.github.io/xbill-web/)
+
+Or grab **`dist/xbill.html`** and open it locally — one self-contained file,
+no server, no build step, no network access.
 
 ---
 
